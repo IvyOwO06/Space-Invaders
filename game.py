@@ -18,6 +18,7 @@ class Game:
         self.alien_lasers_group = pygame.sprite.Group()
         self.mystery_ship_group = pygame.sprite.GroupSingle()
         self.lives = 3
+        self.level = 1
         self.run = True
         self.score = 0
         self.highscore = 0
@@ -58,11 +59,11 @@ class Game:
         alien_sprites = self.aliens_group.sprites()
         for alien in alien_sprites:
             if alien.rect.right >= self.screen_width + self.offset/2:
-                self.aliens_direction = -1
+                self.aliens_direction = -1 - 1 * self.level / 25
                 self.alien_move_down(2)
             elif alien.rect.left <= self.offset/2:
                 self.alien_move_down(2)
-                self.aliens_direction = 1
+                self.aliens_direction = 1 + 1 * self.level / 25
 
     def alien_move_down(self, distance):
         if self.aliens_group:
@@ -87,13 +88,13 @@ class Game:
                 if aliens_hit:
                     self.explosion_sound.play()
                     for alien in aliens_hit:
-                        self.score += alien.type * 100
+                        self.score += alien.type * 100 * self.level
                         self.check_for_highscore()
                         laser_sprite.kill()
 
                 if pygame.sprite.spritecollide(laser_sprite, self.mystery_ship_group, True):
                     self.explosion_sound.play()
-                    self.score += 500
+                    self.score += 500 * self.level
                     self.check_for_highscore()
                     laser_sprite.kill()
                 
@@ -128,6 +129,7 @@ class Game:
     def reset(self):
         self.run = True
         self.lives = 3
+        self.level = 1
         self.spaceship_group.sprite.reset()
         self.aliens_group.empty()
         self.alien_lasers_group.empty()
@@ -149,3 +151,13 @@ class Game:
                 self.highscore = int(file.read())
         except FileNotFoundError:
             self.highscore = 0
+
+    def level_up(self):
+        if not self.aliens_group:
+            self.level += 1
+            self.alien_lasers_group.empty()
+            self.create_aliens()
+            if self.lives < 5 and self.level < 25:
+                self.lives += 1
+            if self.level % 5 == 0:
+                self.obstacles = self.create_obstacles()

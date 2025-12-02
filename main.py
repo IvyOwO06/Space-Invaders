@@ -14,7 +14,7 @@ GREY = (29, 29, 27)
 YELLOW = (243, 216, 63)
 
 font = pygame.font.Font("Font/monogram.ttf", 40)
-level_surface = font.render("LEVEL 01", False, YELLOW)
+level_text_surface = font.render("LEVEL", False, YELLOW)
 game_over_surface = font.render("GAME OVER", False, YELLOW)
 score_text_surface = font.render("SCORE", False, YELLOW)
 highscore_text_surface = font.render("HIGH-SCORE", False, YELLOW)
@@ -46,7 +46,7 @@ while True:
             pygame.time.set_timer(MYSTERY_SHIP, random.randint(4000, 8000))
 
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_SPACE] and game.run == False:
+        if keys[pygame.K_r]:
             game.reset()
 
     # Updating
@@ -56,6 +56,7 @@ while True:
         game.alien_lasers_group.update()
         game.mystery_ship_group.update()
         game.check_for_collsions()
+        game.level_up()
 
     # Drawing
     screen.fill(GREY)
@@ -65,7 +66,10 @@ while True:
     pygame.draw.line(screen, YELLOW, (25, 730), (775, 730), 3)
 
     if game.run:
-        screen.blit(level_surface, (570, 740, 50, 50))
+        screen.blit(level_text_surface, (570, 740, 50, 50))
+        formatted_level = str(game.level).zfill(2)
+        level_surface = font.render(formatted_level, False, YELLOW)
+        screen.blit(level_surface, (650, 740, 50, 50))
     else:
         screen.blit(game_over_surface, (570, 740, 50, 50))
 
