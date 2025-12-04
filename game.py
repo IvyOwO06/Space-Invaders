@@ -10,7 +10,7 @@ class Game:
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.offset = offset
-        self.alien_level = 4
+        self.alien_level = 0
         self.spaceship_group = pygame.sprite.GroupSingle()
         self.spaceship_group.add(Spaceship(self.screen_width, self.screen_height, self.offset))
         self.obstacles = self.create_obstacles()
