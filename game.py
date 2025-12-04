@@ -3,20 +3,23 @@ from spaceship import Spaceship
 from obstacle import Obstacle, grid
 from alien import Alien, MysteryShip
 from laser import Laser
+from health_potion import Health_potion
 
 class Game:
     def __init__(self, screen_width, screen_height, offset):
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.offset = offset
+        self.alien_level = 4
         self.spaceship_group = pygame.sprite.GroupSingle()
         self.spaceship_group.add(Spaceship(self.screen_width, self.screen_height, self.offset))
         self.obstacles = self.create_obstacles()
         self.aliens_group = pygame.sprite.Group()
-        self.create_aliens()
+        self.create_aliens(self.alien_level)
         self.aliens_direction = 1
         self.alien_lasers_group = pygame.sprite.Group()
         self.mystery_ship_group = pygame.sprite.GroupSingle()
+        self.health_potion_group = pygame.sprite.GroupSingle()
         self.lives = 3
         self.level = 1
         self.run = True
@@ -37,21 +40,30 @@ class Game:
             obstacles.append(obstacle)
         return obstacles
     
-    def create_aliens(self):
-        for row in range(5):
-            for column in range(11):
-                x = column * 55 + 75
-                y = row * 55 + 110
+    def create_aliens(self, alien_level):
+        if alien_level == 404:
+            for row in range(7):
+                for column in range(11):
+                    x = column * 55 + 75
+                    y = row * 55 + 110
+                
+                    alien = Alien("error", x + self.offset/2, y)
+                    self.aliens_group.add(alien)
+        else:
+            for row in range(5):
+                for column in range(11):
+                    x = column * 55 + 75
+                    y = row * 55 + 110
 
-                if row == 0:
-                    alien_type = 3
-                elif row in (1, 2):
-                    alien_type = 2
-                else:
-                    alien_type = 1
+                    if row == 0:
+                        alien_type = 3 + alien_level
+                    elif row in (1, 2):
+                        alien_type = 2 + alien_level
+                    else:
+                        alien_type = 1 + alien_level
 
-                alien = Alien(alien_type, x + self.offset/2, y)
-                self.aliens_group.add(alien)
+                    alien = Alien(alien_type, x + self.offset/2, y)
+                    self.aliens_group.add(alien)
 
     def move_aliens(self):
         self.aliens_group.update(self.aliens_direction)
@@ -59,11 +71,11 @@ class Game:
         alien_sprites = self.aliens_group.sprites()
         for alien in alien_sprites:
             if alien.rect.right >= self.screen_width + self.offset/2:
-                self.aliens_direction = -1 - 1 * self.level / 25
-                self.alien_move_down(2)
+                self.aliens_direction = -1 - 1 * self.level / 100
+                self.alien_move_down(2 + 1 * self.level / 100)
             elif alien.rect.left <= self.offset/2:
-                self.alien_move_down(2)
-                self.aliens_direction = 1 + 1 * self.level / 25
+                self.alien_move_down(2 + 1 * self.level / 100)
+                self.aliens_direction = 1 + 1 * self.level / 100
 
     def alien_move_down(self, distance):
         if self.aliens_group:
@@ -79,6 +91,10 @@ class Game:
     def create_mystery_ship(self):
         self.mystery_ship_group.add(MysteryShip(self.screen_width, self.offset))
 
+    def drop_health_potion(self):
+        if not self.health_potion_group:
+            self.health_potion_group.add(Health_potion(random.randint(50, 700), self.screen_height))
+
     def check_for_collsions(self):
         # Spaceship
         if self.spaceship_group.sprite.lasers_group:
@@ -88,13 +104,18 @@ class Game:
                 if aliens_hit:
                     self.explosion_sound.play()
                     for alien in aliens_hit:
-                        self.score += alien.type * 100 * self.level
-                        self.check_for_highscore()
-                        laser_sprite.kill()
+                        try:
+                            self.score += alien.type * 100 * self.level
+                            self.check_for_highscore()
+                            laser_sprite.kill()
+                        except:
+                            self.score += 404 * 100 * self.level
+                            self.check_for_highscore()
+                            laser_sprite.kill()
 
                 if pygame.sprite.spritecollide(laser_sprite, self.mystery_ship_group, True):
                     self.explosion_sound.play()
-                    self.score += 500 * self.level
+                    self.score += 500 * self.level * (1 + self.alien_level)
                     self.check_for_highscore()
                     laser_sprite.kill()
                 
@@ -115,6 +136,7 @@ class Game:
                     if pygame.sprite.spritecollide(laser_sprite, obstacle.blocks_group, True):
                         laser_sprite.kill()
 
+        # Obstacles
         if self.aliens_group:
             for alien in self.aliens_group:
                 for obstacle in self.obstacles:
@@ -123,6 +145,20 @@ class Game:
                 if pygame.sprite.spritecollide(alien, self.spaceship_group, False):
                     self.game_over()
 
+        # Health Potion
+        if self.health_potion_group:
+            for health_pot in self.health_potion_group:
+                if pygame.sprite.spritecollide(health_pot, self.spaceship_group, False):
+                    health_pot.kill()
+                    self.life_up()
+
+
+    def life_up(self):
+        if self.lives < 10:
+            self.lives += 1
+        else:
+            self.score += 10000 * (1 + self.level * (1 + self.alien_level))
+
     def game_over(self):
         self.run = False
 
@@ -130,10 +166,11 @@ class Game:
         self.run = True
         self.lives = 3
         self.level = 1
+        self.alien_level = 0
         self.spaceship_group.sprite.reset()
         self.aliens_group.empty()
         self.alien_lasers_group.empty()
-        self.create_aliens()
+        self.create_aliens(self.alien_level)
         self.mystery_ship_group.empty()
         self.obstacles = self.create_obstacles()
         self.score = 0
@@ -156,8 +193,16 @@ class Game:
         if not self.aliens_group:
             self.level += 1
             self.alien_lasers_group.empty()
-            self.create_aliens()
-            if self.lives < 5 and self.level < 25:
-                self.lives += 1
             if self.level % 5 == 0:
                 self.obstacles = self.create_obstacles()
+                self.alien_level += 1
+
+            try:
+                self.create_aliens(self.alien_level)
+            except:
+                self.alien_level -= 1
+                self.create_aliens(self.alien_level)
+                print(f"Right now I've only got {self.alien_level + 3} different aliens, come back later for more!")
+                # print("ERROR: MISSING TEXTURE")
+            if self.lives < 5 and self.level < 25:
+                self.life_up()
