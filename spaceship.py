@@ -13,8 +13,9 @@ class Spaceship(pygame.sprite.Sprite):
         self.lasers_group = pygame.sprite.Group()
         self.laser_ready = True
         self.laser_time = 0
-        self.laser_delay = 300
+        self.laser_delay = 0
         self.laser_sound = pygame.mixer.Sound("laser.ogg")
+        self.dev_key = pygame.K_l
 
     def get_user_input(self):
         keys = pygame.key.get_pressed()

@@ -10,9 +10,11 @@ class Game:
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.offset = offset
+        self.alien_error = False
         self.alien_level = 0
         self.spaceship_group = pygame.sprite.GroupSingle()
-        self.spaceship_group.add(Spaceship(self.screen_width, self.screen_height, self.offset))
+        self.spaceship = Spaceship(self.screen_width, self.screen_height, self.offset)
+        self.spaceship_group.add(self.spaceship)
         self.obstacles = self.create_obstacles()
         self.aliens_group = pygame.sprite.Group()
         self.create_aliens(self.alien_level)
@@ -41,7 +43,7 @@ class Game:
         return obstacles
     
     def create_aliens(self, alien_level):
-        if alien_level == 404:
+        if self.alien_error == True:
             for row in range(7):
                 for column in range(11):
                     x = column * 55 + 75
@@ -136,7 +138,7 @@ class Game:
                     if pygame.sprite.spritecollide(laser_sprite, obstacle.blocks_group, True):
                         laser_sprite.kill()
 
-        # Obstacles
+        # Aliens
         if self.aliens_group:
             for alien in self.aliens_group:
                 for obstacle in self.obstacles:
@@ -172,6 +174,7 @@ class Game:
         self.alien_lasers_group.empty()
         self.create_aliens(self.alien_level)
         self.mystery_ship_group.empty()
+        self.health_potion_group.empty()
         self.obstacles = self.create_obstacles()
         self.score = 0
 
@@ -196,13 +199,16 @@ class Game:
             if self.level % 5 == 0:
                 self.obstacles = self.create_obstacles()
                 self.alien_level += 1
+            print(f"LEVEL: {self.level}")
 
             try:
                 self.create_aliens(self.alien_level)
             except:
                 self.alien_level -= 1
+                # self.alien_error = True
                 self.create_aliens(self.alien_level)
                 print(f"Right now I've only got {self.alien_level + 3} different aliens, come back later for more!")
+                self.score += int(2000 * self.level * self.alien_level / 2)
                 # print("ERROR: MISSING TEXTURE")
             if self.lives < 5 and self.level < 25:
                 self.life_up()
