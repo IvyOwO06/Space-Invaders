@@ -70,8 +70,10 @@ while True:
             keys = pygame.key.get_pressed()
             if keys[pygame.K_r]:
                 game.reset()
-            if keys[game.spaceship.dev_key]:
-                game.lives = 999
+            # if keys[game.spaceship.dev_key]:
+            #     game.lives = 999
+            # if keys[pygame.K_k]:
+            #     game.aliens_group.empty()
 
         # Updating
         if game.run:
